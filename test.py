@@ -6,7 +6,7 @@ import pandas as pd
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
-from sklearn.metrics import cohen_kappa_score
+from sklearn.metrics import cohen_kappa_score, precision_score, recall_score, roc_auc_score
 
 import weka.core.jvm as jvm
 import weka.core.converters as converters
@@ -53,12 +53,19 @@ files.sort()
 
 weka_auc = {}
 weka_kappa = {}
-weka_err = {}
+weka_precision = {}
+weka_recall = {}
+weka_auc = {}
+
 sklearn_auc = {}
 sklearn_kappa = {}
-sklearn_err = {}
-weka_results = {"AUC" : weka_auc, "KAPPA" : weka_kappa, "ERR" : weka_err}
-sklearn_results = {"AUC" : sklearn_auc, "KAPPA" : sklearn_kappa, "ERR" : sklearn_err}
+sklearn_precision = {}
+sklearn_recall = {}
+sklearn_auc = {}
+sklearn_cod = {}
+
+weka_results = {"AUC" : weka_auc, "KAPPA" : weka_kappa}
+sklearn_results = {"AUC" : sklearn_auc, "KAPPA" : sklearn_kappa}
 
 jvm.start(max_heap_size="8192m")
 
@@ -82,14 +89,19 @@ for file in files:
 	if not file=="./datasets/bridges/bridges.arff" and not file=="./datasets/echocardiogram/echocardiogram.arff":
 		dataset = load_arff(file)
 
-		Y = dataset["target"]
+		y_true = list(dataset["target"])
 		X = dataset.drop("target", axis=1)
 		#if X.isnull().values.any():
 		X = _preprocess_data(X)
 
-		dt1.fit(X,Y)
-		y = dt1.predict(X)
-		sklearn_kappa[file] = cohen_kappa_score(Y, y)
+		dt1.fit(X,y_true)
+		y_pred = dt1.predict(X)
+		sklearn_kappa[file] = cohen_kappa_score(y_true,y_pred)
+		sklearn_precision[file] = precision_score(y_true,y_pred, average='weighted')
+		sklearn_recall[file] = recall_score(y_true,y_pred,average='weighted')
+		#sklearn_auc[file] = roc_auc_score(y_true,y_pred,average='weighted')
+
+
 
 		data = loader.load_file(file)
 		data.class_is_last()
@@ -97,9 +109,15 @@ for file in files:
 		pout = PredictionOutput(classname="weka.classifiers.evaluation.output.prediction.CSV")
 		evl = Evaluation(data)
 		evl.crossvalidate_model(rt1, data, 10, Random(1), pout)
-		weka_kappa[file]=(evl.kappa)
-		print(sklearn_kappa[file], end='\t')
-		print(weka_kappa[file])
+		weka_kappa[file]=evl.kappa
+		weka_precision[file] = evl.weighted_precision
+		weka_auc[file] = evl.weighted_area_under_roc
+		weka_recall[file] = evl.weighted_recall
+
+		print(pout)
+
+		#print(sklearn_precision[file], end='\t')
+		#print(weka_precision[file])
 
 jvm.stop()
 
