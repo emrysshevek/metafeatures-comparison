@@ -1,2 +1,0 @@
-javabridge==1.0.14
-python-weka-wrapper3==0.1.1
