@@ -86,29 +86,30 @@ for file in files:
 	data = loader.load_file(file)
 	data.class_is_last()
 	weka_tree.build_classifier(data)
+	w_pred = []
+	for index, inst in enumerate(data):
+		w_pred.append(weka_tree.classify_instance(inst))
+	print(w_pred)
 	pout = PredictionOutput(classname="weka.classifiers.evaluation.output.prediction.CSV")
 	evl = Evaluation(data)
-	options = ["-t",file,'-T',file,]
-	results = evl.evaluate_model(weka_tree,options)
 	#compute_weka(weka_tree,data,pout)
 	''' results = pd.read_csv((StringIO(str(pout))),sep=',')
 	results = list(results["predicted"])
 	w_pred = []
 	for x in results:
-		w_pred.append(str(x)[2:])
-	weka_f.append(evl.weighted_f_measure) '''
+		w_pred.append(str(x)[2:])'''
+	weka_f.append(evl.weighted_f_measure)
 
 	#print predictions
 
 	#cod values
 	total_matches = 0
-	''' for i in range(len(s_pred)):
+	for i in range(len(s_pred)):
 		if s_pred[i] == w_pred[i]:
-			total_matches = total_matches+1 '''
+			total_matches = total_matches+1
 	cod = total_matches/len(s_pred)
 	cod_scores.append(cod)
 
 #print(sklearn_f)
-#print(cod_scores)
-print(results)
+print(w_pred)
 jvm.stop()
